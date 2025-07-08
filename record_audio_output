@@ -26,5 +26,5 @@ else
     notify-send -u normal -r $notificationId -a record_audio_output -i audio-off 'Recording finished' "Desktop audio recorded to $filename. Path copied to clipboard"
 
     # Copy the file to the clipboard
-    echo "file://${filename}"|xclip -i -sel c -t text/uri-list
+    echo -n "file://${filename}" | xclip -i -sel c -t text/uri-list
 fi
