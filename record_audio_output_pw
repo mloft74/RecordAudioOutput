@@ -21,7 +21,7 @@ else
   notify-send -u normal -r $notificationId -a record_audio_output -i audio-off 'Recording finished' "Desktop audio recorded to $filename."
 
   # Copy the file to the clipboard in X11
-  echo "file://${filename}"|xclip -i -sel c -t text/uri-list
+  echo -n "file://${filename}"|xclip -i -sel c -t text/uri-list
 
   # Copy the file to the clipboard in Wayland
   # wl-copy -t text/uri-list <<< "file://${filename}" --foreground
