@@ -9,6 +9,22 @@ else
     # For more use "pacmd list-sinks | grep -e 'name:' -e 'index' -e 'Speakers'" command
     targetSink="@DEFAULT_MONITOR@"
 
+    virtualSink="VirtualSink"
+
+    sinkName=$(pacmd list-sinks | grep -A5 -e '  \* index:' | grep -e 'name:' | sed 's/\s*name: <\([^>]*\)>.*$/\1/')
+    if [ -z "$sinkName" ]
+    then
+        notify-send -u normal -a record_audio_output -i audio-failed 'Recording failed' "Could not find sink name, check if you have an active sink."
+        exit 1
+    elif [ "$sinkName" = "auto_null" ]
+    then
+        notify-send -u normal -a record_audio_output -i audio-failed 'Recording failed' "Can't use the auto_null sink as the default sink, check if you have an active sink."
+        exit 2
+    elif [ "$sinkName" = "$virtualSink" ]
+    then
+        notify-send -u normal -a record_audio_output -i audio-failed 'Recording failed' "Can't use $virtualSink as the default sink, check if you have an active sink."
+        exit 3
+    fi
 
     # 5-character random string
     rand=$(cat /dev/urandom | tr -dc 'A-Z0-9' | fold -w 7 | head -n 1)
@@ -19,8 +35,18 @@ else
     # Start notification showing recording in progress
     notificationId=$(notify-send -p -u critical -a record_audio_output -i audio-on 'Recording in progress' "Desktop audio is being recorded to $filename.")
 
+    # Pulse config
+    nullSinkId=$(pactl load-module module-null-sink sink_name="$virtualSink" sink_properties=device.description="$virtualSink")
+    loopbackId=$(pactl load-module module-loopback latency_msec=1 source="$virtualSink".monitor sink="$sinkName")
+    pactl set-default-sink "$virtualSink"
+
     # Record audio to the file
-    parec -d $targetSink --volume=65536 | lame -r -V7 - $filename
+    parec -d $targetSink | lame -r -V7 - $filename
+
+    # Unset pulse config
+    pactl set-default-sink "$sinkName"
+    pactl unload-module "$loopbackId"
+    pactl unload-module "$nullSinkId"
 
     # Replace notification
     notify-send -u normal -r $notificationId -a record_audio_output -i audio-off 'Recording finished' "Desktop audio recorded to $filename. Path copied to clipboard"
