@@ -15,7 +15,7 @@ else
   notificationId=$(notify-send -p -u critical -a record_audio_output -i audio-on 'Recording in progress' "Desktop audio is being recorded to $filename.")
 
   # Record audio to the file
-  pw-record -P '{ stream.capture.sink=true }' - | lame -r -s 48 -m s -V7 - $filename
+  pw-record -a -P '{ stream.capture.sink=true }' - | lame -r -s 48 -m s -V7 - $filename
 
   # Replace notification
   notify-send -u normal -r $notificationId -a record_audio_output -i audio-off 'Recording finished' "Desktop audio recorded to $filename."
